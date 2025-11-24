@@ -136,7 +136,11 @@ std::string getExecutablePath()
     }
     return ret;
 }
-
+#elif(__EMSCRIPTEN__)
+std::string getExecutablePath()
+{
+    return std::string(".");
+}
 #else
 
 #    error Unsupported plattform!

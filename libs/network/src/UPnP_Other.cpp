@@ -6,8 +6,13 @@
 #include "s25util/StringConversion.h"
 #include "s25util/UniqueHandle.h"
 #include <cstring>
+#ifdef __EMSCRIPTEN__
+#include <miniupnpc.h>
+#include <upnpcommands.h>
+#else
 #include <miniupnpc/miniupnpc.h>
 #include <miniupnpc/upnpcommands.h>
+#endif
 #include <stdexcept>
 #include <string>
 

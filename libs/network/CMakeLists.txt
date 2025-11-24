@@ -3,9 +3,30 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 if(NOT MSVC)
-    find_package(Miniupnpc REQUIRED)
-    include(GatherDll)
-    gather_dll(MINIUPNPC)
+    if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+        include(ExternalProject)
+        ExternalProject_Add(miniupnpc
+                PREFIX "miniupnpc"
+                URL "http://miniupnp.free.fr/files/miniupnpc-2.3.3.tar.gz"
+                BUILD_IN_SOURCE true
+                PATCH_COMMAND
+                CONFIGURE_COMMAND "emcmake"
+                "${CMAKE_COMMAND}"
+                "-G${CMAKE_GENERATOR}"
+                "-DCMAKE_BUILD_TYPE=Release"
+                "-DUPNPC_BUILD_SHARED=OFF"
+                "-DUPNPC_BUILD_TESTS=OFF"
+                "-DUPNPC_BUILD_SAMPLE=OFF"
+                BUILD_COMMAND "${CMAKE_MAKE_PROGRAM}"
+                INSTALL_COMMAND ""
+        )
+        set(MINIUPNPC_LIBRARY "${CMAKE_BINARY_DIR}/external/libutil/libs/network/miniupnpc/src/miniupnpc/libminiupnpc.a")
+        set(MINIUPNPC_INCLUDE_DIR "${CMAKE_BINARY_DIR}/external/libutil/libs/network/miniupnpc/src/miniupnpc/include")
+    else()
+        find_package(Miniupnpc REQUIRED)
+        include(GatherDll)
+        gather_dll(MINIUPNPC)
+    endif()
 endif()
 
 file(GLOB SRC_FILES src/*.*)
