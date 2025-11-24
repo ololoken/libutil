@@ -140,7 +140,11 @@ Message* MessageHandler::recv(Socket& sock, int& error, unsigned timeoutInMs)
         read = sock.BytesWaiting();
         if(read < 0)
             return nullptr;
+#if __EMSCRIPTEN__ // very dirty patch
+        if(read >= static_cast<int>(header.msgLen) || !timeoutInMs)
+#else
         if(read >= static_cast<int>(header.msgLen + sizeof(header)) || !timeoutInMs)
+#endif
             break;
         // Wait for socket again (non-blocking)
         SocketSet set;
@@ -150,7 +154,11 @@ Message* MessageHandler::recv(Socket& sock, int& error, unsigned timeoutInMs)
     } while(!timeoutReached(lastTime, timeoutInMs));
 
     static unsigned blocktimeout = 0;
+#if __EMSCRIPTEN__ // very dirty patch again
+    if(read < static_cast<int>(header.msgLen))
+#else
     if(read < static_cast<int>(header.msgLen + sizeof(header)))
+#endif
     {
         ++blocktimeout;
         if(blocktimeout < 120)
@@ -160,6 +168,7 @@ Message* MessageHandler::recv(Socket& sock, int& error, unsigned timeoutInMs)
     }
     blocktimeout = 0;
 
+#if !__EMSCRIPTEN__ // very dirty patch one more time
     // Block nochmals abrufen (um ihn aus dem Cache zu entfernen)
     read = sock.Recv(&header, sizeof(header));
     if(read != sizeof(header))
@@ -167,6 +176,7 @@ Message* MessageHandler::recv(Socket& sock, int& error, unsigned timeoutInMs)
         LOG.write("recv: id,length: only got %d bytes instead of %d\n") % read % sizeof(header);
         return nullptr;
     }
+#endif
 
     Serializer ser;
     if(header.msgLen)
